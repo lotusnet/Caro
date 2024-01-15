@@ -1,3 +1,4 @@
+import { AutoFixHigh, ModeEdit, PanToolAlt } from "@mui/icons-material";
 import {
 	Button,
 	Checkbox,
@@ -6,6 +7,8 @@ import {
 	Select,
 	SelectChangeEvent,
 	Stack,
+	ToggleButton,
+	ToggleButtonGroup,
 	Typography,
 } from "@mui/material";
 import { VFC } from "react";
@@ -16,15 +19,19 @@ type Props = {
 	fillColor: string;
 	side: number;
 	startAngle: number;
+	toolMode: string;
+	eraserWidth: number;
+	eraserShape: string;
 	fill: boolean;
-	edit: boolean;
 	guidewires: boolean;
 	setColor: (color: string) => void;
 	setFillColor: (color: string) => void;
 	setSide: (side: number) => void;
 	setStartAngle: (startAngle: number) => void;
+	setToolMode: (startAngle: string) => void;
+	setEraserWidth: (startAngle: number) => void;
+	setEraserShape: (eraserShape: string) => void;
 	setFill: (fill: boolean) => void;
-	setEdit: (edit: boolean) => void;
 	setGuidewires: (guidewires: boolean) => void;
 	eraseLines: () => void;
 };
@@ -35,19 +42,24 @@ export const DrawingPolygonControls: VFC<Props> = (props: Props) => {
 		fillColor,
 		side,
 		startAngle,
+		toolMode,
+		eraserWidth,
+		eraserShape,
 		fill,
-		edit,
 		guidewires,
 		setColor,
 		setFillColor,
 		setSide,
 		setStartAngle,
+		setToolMode,
+		setEraserWidth,
+		setEraserShape,
 		setFill,
-		setEdit,
 		setGuidewires,
 		eraseLines,
 	} = props;
 	const colors = [
+		"yellow",
 		"red",
 		"green",
 		"blue",
@@ -60,6 +72,7 @@ export const DrawingPolygonControls: VFC<Props> = (props: Props) => {
 	const sides = [3, 4, 6, 8, 10, 12, 20, 30];
 	const startAngles = [0, 22.5, 45, 67.5, 90];
 	const fillColors = [
+		{ color: "yellow", value: "yellow" },
 		{ color: "semi-transparent red", value: "rgba(255,0,0,0.5)" },
 		{ color: "green", value: "green" },
 		{ color: "semi-transparent blue", value: "rgba(0,0,255,0.5)" },
@@ -69,6 +82,8 @@ export const DrawingPolygonControls: VFC<Props> = (props: Props) => {
 		{ color: "navy", value: "navy" },
 		{ color: "purple", value: "purple" },
 	];
+	const eraserWidths = [5, 10, 25, 50, 75, 100, 125, 150, 175, 200];
+	const eraserShapes = ["circle", "square"];
 
 	const handleColorChange = (event: SelectChangeEvent<string>) => {
 		setColor(event.target.value);
@@ -86,16 +101,27 @@ export const DrawingPolygonControls: VFC<Props> = (props: Props) => {
 		setStartAngle(Number(event.target.value));
 	};
 
+	const handleEraserWidthChange = (event: SelectChangeEvent<number>) => {
+		setEraserWidth(Number(event.target.value));
+	};
+
+	const handleEraserShapeChange = (event: SelectChangeEvent<string>) => {
+		setEraserShape(event.target.value);
+	};
+
 	const handleFillChange = () => {
 		setFill(!fill);
 	};
 
-	const handleEditChange = () => {
-		setEdit(!edit);
-	};
-
 	const handleGuidewiresChange = () => {
 		setGuidewires(!guidewires);
+	};
+
+	const handleToolModeChange = (
+		event: React.MouseEvent<HTMLElement>,
+		toolMode: string
+	) => {
+		if (toolMode) setToolMode(toolMode);
 	};
 
 	return (
@@ -164,11 +190,6 @@ export const DrawingPolygonControls: VFC<Props> = (props: Props) => {
 					labelPlacement="start"
 				/>
 				<FormControlLabel
-					control={<Checkbox value={edit} onChange={handleEditChange} />}
-					label="Edit:"
-					labelPlacement="start"
-				/>
-				<FormControlLabel
 					control={
 						<Checkbox value={guidewires} onChange={handleGuidewiresChange} />
 					}
@@ -178,6 +199,55 @@ export const DrawingPolygonControls: VFC<Props> = (props: Props) => {
 				<Button variant="outlined" onClick={() => eraseLines()}>
 					Erase All
 				</Button>
+			</Stack>
+			<Stack
+				direction="row"
+				alignItems="center"
+				spacing={2}
+				className={styles.controls2}
+			>
+				<Typography paddingLeft="10px">Eraser Width:</Typography>
+				<Select
+					value={eraserWidth}
+					onChange={handleEraserWidthChange}
+					displayEmpty
+					inputProps={{ "aria-label": "Without label" }}
+				>
+					{eraserWidths.map((eraserWidth) => (
+						<MenuItem key={eraserWidth} value={eraserWidth}>
+							{eraserWidth}
+						</MenuItem>
+					))}
+				</Select>
+				<Typography paddingLeft="10px">Eraser Shape:</Typography>
+				<Select
+					value={eraserShape}
+					onChange={handleEraserShapeChange}
+					displayEmpty
+					inputProps={{ "aria-label": "Without label" }}
+				>
+					{eraserShapes.map((eraserShape) => (
+						<MenuItem key={eraserShape} value={eraserShape}>
+							{eraserShape}
+						</MenuItem>
+					))}
+				</Select>
+				<ToggleButtonGroup
+					value={toolMode}
+					exclusive
+					defaultValue="draw"
+					onChange={handleToolModeChange}
+				>
+					<ToggleButton value="draw" aria-label="draw">
+						<ModeEdit />
+					</ToggleButton>
+					<ToggleButton value="edit" aria-label="edit">
+						<PanToolAlt />
+					</ToggleButton>
+					<ToggleButton value="erase" aria-label="erase">
+						<AutoFixHigh />
+					</ToggleButton>
+				</ToggleButtonGroup>
 			</Stack>
 		</>
 	);
