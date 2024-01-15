@@ -3,6 +3,7 @@ import { drawGrid } from "functions/drawGrid";
 import { VFC, useEffect, useRef } from "react";
 import styles from "./DrawingBoard.module.css";
 import DrawingLine from "./DrawingLine";
+import DrawingPolygon from "./DrawingPolygon";
 
 type Props = {
 	content: string;
@@ -55,6 +56,8 @@ export const DrawingBoard: VFC<Props> = (props: Props) => {
 	const getCanvas = () => {
 		if (content === "drawLine" || content === "dial") {
 			return <DrawingLine content={content} />;
+		} else if (content === "polygon") {
+			return <DrawingPolygon />;
 		}
 
 		return (

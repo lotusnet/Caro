@@ -2,12 +2,14 @@ import { Stack } from "@mui/material";
 import { drawCentroidGuidwire, drawDial } from "functions/drawDial";
 import { drawGrid } from "functions/drawGrid";
 import {
-	Point,
-	Rect,
+	drawGuidewires,
+	erase,
+	getRubberBandRectangle,
 	restoreDrawingSurface,
 	saveDrawingSurface,
 	windowToCanvas,
 } from "functions/drawUtils";
+import { Point, Rect } from "models/Polygon";
 import { VFC, useEffect, useRef, useState } from "react";
 import styles from "./DrawingLine.module.css";
 import DrawingLineControls from "./DrawingLineControls";
@@ -20,7 +22,7 @@ export const DrawingLine: VFC<Props> = (props: Props) => {
 	const { content } = props;
 	const canvasRef = useRef(null);
 	const radius = 150;
-	let drawingSurfaceImageData: ImageData | undefined;
+	let drawingSurfaceImageData: ImageData | null;
 	let rubberBandRect: Rect = { left: 0, top: 0, width: 0, height: 0 };
 	let mouseDown: Point = { x: 0, y: 0 };
 	let dragging: boolean;
@@ -42,33 +44,11 @@ export const DrawingLine: VFC<Props> = (props: Props) => {
 
 		context.save();
 		if (content === "dial") {
-			// context.shadowOffsetX = 2;
-			// context.shadowOffsetY = 2;
-			// context.shadowBlur = 4;
-			// context.textAlign = "center";
-			// context.textBaseline = "middle";
 			drawDial(canvas, radius);
 		}
 		context.restore();
 	});
 
-	// ラバーバンド
-	const updateRubberBandRectangle = (loc: Point) => {
-		rubberBandRect.width = Math.abs(loc.x - mouseDown.x);
-		rubberBandRect.height = Math.abs(loc.y - mouseDown.y);
-
-		if (loc.x > mouseDown.x) {
-			rubberBandRect.left = mouseDown.x;
-		} else {
-			rubberBandRect.left = loc.x;
-		}
-
-		if (loc.y > mouseDown.y) {
-			rubberBandRect.top = mouseDown.y;
-		} else {
-			rubberBandRect.top = loc.y;
-		}
-	};
 	const drawRubberbandShape = (loc: Point) => {
 		const context = getContext();
 		context.beginPath();
@@ -77,36 +57,8 @@ export const DrawingLine: VFC<Props> = (props: Props) => {
 		context.stroke();
 	};
 	const updateRubberband = (loc: Point) => {
-		updateRubberBandRectangle(loc);
+		rubberBandRect = getRubberBandRectangle(loc, mouseDown);
 		drawRubberbandShape(loc);
-	};
-
-	// ガイド線
-	const drawHorizontalLine = (y: number) => {
-		const context = getContext();
-		context.beginPath();
-		context.moveTo(0, y + 0.5);
-		context.lineTo(context.canvas.width, y + 0.5);
-		context.stroke();
-	};
-
-	const drawVerticalLine = (x: number) => {
-		const context = getContext();
-		context.beginPath();
-		context.moveTo(x + 0.5, 0);
-		context.lineTo(x + 0.5, context.canvas.height);
-		context.stroke();
-	};
-
-	const drawGuidewires = (loc: Point) => {
-		const context = getContext();
-		context.save();
-		context.strokeStyle = "rgba(0,0,230,0.4)";
-		context.lineWidth = 0.5;
-
-		drawVerticalLine(loc.x);
-		drawHorizontalLine(loc.y);
-		context.restore();
 	};
 
 	// drawLineのイベントハンドラー
@@ -129,10 +81,11 @@ export const DrawingLine: VFC<Props> = (props: Props) => {
 		if (dragging) {
 			e.preventDefault();
 			const loc = windowToCanvas(canvas, e.clientX, e.clientY);
-			restoreDrawingSurface(getContext(), drawingSurfaceImageData);
+			const context = getContext();
+			restoreDrawingSurface(context, drawingSurfaceImageData);
 			updateRubberband(loc);
 			if (guidewires) {
-				drawGuidewires(loc);
+				drawGuidewires(context, loc);
 			}
 		}
 	};
@@ -165,14 +118,15 @@ export const DrawingLine: VFC<Props> = (props: Props) => {
 		if (dragging) {
 			e.preventDefault();
 
-			erase((canvas) => {
+			const context = getContext();
+			erase(context, (canvas) => {
 				drawGrid(canvas, "lightgray", 10, 10);
 				drawDial(canvas, radius);
 			});
 
-			restoreDrawingSurface(getContext(), drawingSurfaceImageData);
+			restoreDrawingSurface(context, drawingSurfaceImageData);
 			drawCentroidGuidwire(
-				getContext(),
+				context,
 				calcCircumferencePoint(
 					windowToCanvas(canvas, e.clientX, e.clientY),
 					{ x: canvas.width / 2, y: canvas.height / 2 },
@@ -193,14 +147,15 @@ export const DrawingLine: VFC<Props> = (props: Props) => {
 		const canvas: any = canvasRef.current;
 		if (!canvas) return;
 
-		erase((canvas) => {
+		const context = getContext();
+		erase(context, (canvas) => {
 			drawGrid(canvas, "lightgray", 10, 10);
 			drawDial(canvas, radius);
 		});
 
-		restoreDrawingSurface(getContext(), drawingSurfaceImageData);
+		restoreDrawingSurface(context, drawingSurfaceImageData);
 		drawCentroidGuidwire(
-			getContext(),
+			context,
 			calcCircumferencePoint(
 				windowToCanvas(canvas, e.clientX, e.clientY),
 				{ x: canvas.width / 2, y: canvas.height / 2 },
@@ -211,25 +166,7 @@ export const DrawingLine: VFC<Props> = (props: Props) => {
 	};
 
 	const eraseLines = () => {
-		erase((canvas) => drawGrid(canvas, "lightgray", 10, 10));
-		// const context = getContext();
-		// const canvas = context.canvas;
-		// context.save();
-		// context.clearRect(0, 0, canvas.width, canvas.height);
-		// drawGrid(canvas, "lightgray", 10, 10);
-		// drawingSurfaceImageData = saveDrawingSurface(getContext());
-		// context.restore();
-	};
-
-	const erase = (draw: (canvas: HTMLCanvasElement) => void) => {
-		const context = getContext();
-		const canvas = context.canvas;
-		context.save();
-		context.clearRect(0, 0, canvas.width, canvas.height);
-		if (draw) draw(canvas);
-		//drawGrid(canvas, "lightgray", 10, 10);
-		drawingSurfaceImageData = saveDrawingSurface(getContext());
-		context.restore();
+		erase(getContext(), (canvas) => drawGrid(canvas, "lightgray", 10, 10));
 	};
 
 	return (

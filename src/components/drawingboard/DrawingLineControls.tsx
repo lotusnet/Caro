@@ -8,7 +8,7 @@ import {
 	Typography,
 } from "@mui/material";
 import { SetStateAction, SyntheticEvent, VFC } from "react";
-import styles from "./DrawingLineControls.module.css";
+import styles from "./DrawingControls.module.css";
 
 type Props = {
 	color: string;
