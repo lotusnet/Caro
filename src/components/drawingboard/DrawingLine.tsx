@@ -11,7 +11,7 @@ import {
 } from "functions/drawUtils";
 import { Point, Rect } from "models/Polygon";
 import { VFC, useEffect, useRef, useState } from "react";
-import styles from "./DrawingLine.module.css";
+import styles from "./Drawing.module.css";
 import DrawingLineControls from "./DrawingLineControls";
 
 type Props = {

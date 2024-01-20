@@ -18,7 +18,7 @@ import {
 } from "functions/drawUtils";
 import { Point, Polygon, Rect } from "models/Polygon";
 import { VFC, useEffect, useRef, useState } from "react";
-import styles from "./DrawingPolygon.module.css";
+import styles from "./Drawing.module.css";
 import DrawingPolygonControls from "./DrawingPolygonControls";
 
 const ERASER_LINE_WIDTH = 1;

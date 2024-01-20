@@ -1,9 +1,10 @@
 import { drawClock } from "functions/drawClock";
 import { drawGrid } from "functions/drawGrid";
 import { VFC, useEffect, useRef } from "react";
-import styles from "./DrawingBoard.module.css";
+import styles from "./Drawing.module.css";
 import DrawingLine from "./DrawingLine";
 import DrawingPolygon from "./DrawingPolygon";
+import DrawingText from "./DrawingText";
 
 type Props = {
 	content: string;
@@ -58,6 +59,8 @@ export const DrawingBoard: VFC<Props> = (props: Props) => {
 			return <DrawingLine content={content} />;
 		} else if (content === "polygon") {
 			return <DrawingPolygon />;
+		} else if (content === "text") {
+			return <DrawingText />;
 		}
 
 		return (

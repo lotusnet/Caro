@@ -30,6 +30,7 @@ export const Canvas: VFC = () => {
 							<MenuItem value={"drawLine"}>DrawLine</MenuItem>
 							<MenuItem value={"dial"}>Dial</MenuItem>
 							<MenuItem value={"polygon"}>Polygon</MenuItem>
+							<MenuItem value={"text"}>Text</MenuItem>
 						</Select>
 					</Stack>
 					<DrawingBoard content={content} />
