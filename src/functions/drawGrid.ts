@@ -21,13 +21,13 @@ export const drawGrid = (
 	context.clearRect(0, 0, canvas.width, canvas.height);
 	context.strokeStyle = color;
 	context.lineWidth = 0.5;
-	for (var i = stepx + 0.5; i < context?.canvas.width; i += stepx) {
+	for (let i = stepx + 0.5; i < context?.canvas.width; i += stepx) {
 		context.beginPath();
 		context.moveTo(i, 0);
 		context.lineTo(i, context.canvas.height);
 		context.stroke();
 	}
-	for (var i = stepy + 0.5; i < context?.canvas.width; i += stepy) {
+	for (let i = stepy + 0.5; i < context?.canvas.width; i += stepy) {
 		context.beginPath();
 		context.moveTo(0, i);
 		context.lineTo(context.canvas.height, i);
@@ -85,11 +85,11 @@ const drawVerticalAxisTicks = (
 	context: CanvasRenderingContext2D,
 	canvasHeight: number
 ) => {
-	var deltaX;
+	let deltaX;
 	const axisOrigin = { x: AXIS_MARGIN, y: canvasHeight - AXIS_MARGIN };
 	const axisHeight = canvasHeight - AXIS_MARGIN - AXIS_TOP;
 	const numVerticalTicks = axisHeight / VERTICAL_TICK_SPACING;
-	for (var i = 1; i < numVerticalTicks; ++i) {
+	for (let i = 1; i < numVerticalTicks; ++i) {
 		context.save();
 		context.beginPath();
 
@@ -116,11 +116,11 @@ const drawHorizontalAxisTicks = (
 	canvasWidth: number,
 	canvasHeight: number
 ) => {
-	var deltaY;
+	let deltaY;
 	const axisOrigin = { x: AXIS_MARGIN, y: canvasHeight - AXIS_MARGIN };
 	const axisWidth = canvasWidth - AXIS_MARGIN - AXIS_TOP;
 	const numHorizontalTicks = axisWidth / HORIZONTAL_TICK_SPACING;
-	for (var i = 1; i < numHorizontalTicks; ++i) {
+	for (let i = 1; i < numHorizontalTicks; ++i) {
 		context.save();
 		context.beginPath();
 

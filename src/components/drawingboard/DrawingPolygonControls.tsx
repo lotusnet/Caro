@@ -1,4 +1,9 @@
-import { AutoFixHigh, ModeEdit, PanToolAlt } from "@mui/icons-material";
+import {
+	AutoFixHigh,
+	ModeEdit,
+	PanToolAlt,
+	Rotate90DegreesCcw,
+} from "@mui/icons-material";
 import {
 	Button,
 	Checkbox,
@@ -243,6 +248,9 @@ export const DrawingPolygonControls: VFC<Props> = (props: Props) => {
 					</ToggleButton>
 					<ToggleButton value="edit" aria-label="edit">
 						<PanToolAlt />
+					</ToggleButton>
+					<ToggleButton value="rotate" aria-label="edit">
+						<Rotate90DegreesCcw />
 					</ToggleButton>
 					<ToggleButton value="erase" aria-label="erase">
 						<AutoFixHigh />

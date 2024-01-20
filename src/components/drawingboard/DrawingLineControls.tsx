@@ -69,7 +69,7 @@ export const DrawingLineControls: VFC<Props> = (props: Props) => {
 					value={guidewires}
 					onChange={(e) => handleGuidewiresChange(e)}
 				/>
-				<Button variant="outlined" onClick={() => eraseLines()}>
+				<Button letiant="outlined" onClick={() => eraseLines()}>
 					Erase All
 				</Button>
 			</Stack>

@@ -1,7 +1,14 @@
 import { Stack } from "@mui/material";
 import { drawGrid } from "functions/drawGrid";
 import {
+	drawCentroid,
+	drawCentroidGuidewire,
+	drawDegreeAnnotations,
+	drawDegreeDialTicks,
+	drawDegreeOuterDial,
+	drawDegreeTickDial,
 	drawGuidewires,
+	drawTrackingDial,
 	erase,
 	getContext,
 	getRubberBandRectangle,
@@ -32,6 +39,9 @@ export const DrawingPolygon: VFC = () => {
 	let draggingOffsetY: number;
 	let draggingPolygon: Polygon | null;
 	let drawingSurfaceImageData: ImageData | null;
+	let polygonRotating: Polygon | null;
+	let rotatingLockAngle: number;
+	let rotatingLockEngaged: boolean;
 
 	const [polygons, setPolygons] = useState<Polygon[]>([]);
 	const [strokeColor, setStrokeColor] = useState("red");
@@ -59,18 +69,55 @@ export const DrawingPolygon: VFC = () => {
 		// context.restore();
 	});
 
-	const drawPolygon = (context: CanvasRenderingContext2D, polygon: Polygon) => {
-		context.beginPath();
+	const drawPolygon = (
+		context: CanvasRenderingContext2D,
+		polygon: Polygon,
+		angle: number | null
+	) => {
+		if (!context) return;
+
+		const tx = polygon.centerX;
+		const ty = polygon.centerY;
+
+		context.save();
+
+		context.translate(tx, ty);
+
+		if (angle) {
+			context.rotate(angle);
+		}
+
+		polygon.centerX = 0;
+		polygon.centerY = 0;
+
+		//context.beginPath();
 		polygon.createPath(context);
 		polygon.stroke(context);
 
 		if (polygon.filled) {
 			polygon.fill(context);
 		}
+
+		context.restore();
+
+		polygon.centerX = tx;
+		polygon.centerY = ty;
 	};
 
+	// const drawPolygon = (context: CanvasRenderingContext2D, polygon: Polygon) => {
+	// 	if (!context) return;
+
+	// 	context.beginPath();
+	// 	polygon.createPath(context);
+	// 	polygon.stroke(context);
+
+	// 	if (polygon.filled) {
+	// 		polygon.fill(context);
+	// 	}
+	// };
+
 	const drawPolygons = (context: CanvasRenderingContext2D) => {
-		polygons.forEach((polygon) => drawPolygon(context, polygon));
+		polygons.forEach((polygon) => drawPolygon(context, polygon, null));
 	};
 
 	const drawRubberbandShape = (
@@ -88,7 +135,7 @@ export const DrawingPolygon: VFC = () => {
 			fillColor,
 			fill
 		);
-		drawPolygon(context, polygon);
+		drawPolygon(context, polygon, null);
 
 		if (!dragging) {
 			polygons.push(polygon);
@@ -108,12 +155,22 @@ export const DrawingPolygon: VFC = () => {
 		mouseDown.y = loc.y;
 	};
 	const startEditing = (canvas: HTMLCanvasElement) => {
-		canvas.style.cursor = "pointer";
+		canvas.style.cursor = "grab";
 		setToolMode("edit");
 	};
 	const stopEditing = (canvas: HTMLCanvasElement, mode: string) => {
-		canvas.style.cursor = "crosshair";
+		canvas.style.cursor = mode === "draw" ? "crosshair" : "pointer";
+
 		setToolMode(mode);
+
+		polygonRotating = null;
+		rotatingLockEngaged = false;
+		rotatingLockAngle = 0;
+		const context = getContext(canvasRef.current);
+		if (context) {
+			context.clearRect(0, 0, canvas.width, canvas.height);
+			drawPolygons(context);
+		}
 	};
 
 	// イベントハンドラー
@@ -138,6 +195,25 @@ export const DrawingPolygon: VFC = () => {
 					return;
 				}
 			});
+		} else if (isRotate()) {
+			if (polygonRotating) {
+				stopRotatingPolygon(loc);
+				redraw(context);
+			}
+
+			polygonRotating = getSelectedPolygon(context, loc);
+
+			if (polygonRotating) {
+				drawRotationAnnotations(context, loc);
+
+				if (!rotatingLockEngaged) {
+					rotatingLockEngaged = true;
+					rotatingLockAngle = Math.atan(
+						(loc.y - polygonRotating.centerY) /
+							(loc.x - polygonRotating.centerX)
+					);
+				}
+			}
 		} else {
 			startDragging(context, loc);
 
@@ -161,6 +237,19 @@ export const DrawingPolygon: VFC = () => {
 			context.clearRect(0, 0, canvas.width, canvas.height);
 			drawGrid(canvas, "lightgray", 10, 10);
 			drawPolygons(context);
+		} else if (isRotate() && polygonRotating) {
+			if (rotatingLockEngaged) {
+				let angle =
+					Math.atan(
+						(loc.y - polygonRotating.centerY) /
+							(loc.x - polygonRotating.centerX)
+					) - rotatingLockAngle;
+
+				redraw(context);
+
+				drawPolygon(context, polygonRotating, angle);
+				drawRotationAnnotations(context, loc);
+			}
 		} else {
 			if (dragging) {
 				if (toolMode === "draw") {
@@ -221,6 +310,7 @@ export const DrawingPolygon: VFC = () => {
 
 	const isEdit = () => toolMode === "edit";
 	const isEraser = () => toolMode === "erase";
+	const isRotate = () => toolMode === "rotate";
 
 	// 消しゴム
 	const setDrawPathForEraser = (loc: Point) => {
@@ -303,6 +393,76 @@ export const DrawingPolygon: VFC = () => {
 		context.stroke();
 
 		context.restore();
+	};
+
+	// 回転ダイアルの描画
+	const getSelectedPolygon = (
+		context: CanvasRenderingContext2D,
+		loc: Point
+	) => {
+		if (!context) return null;
+
+		for (let i = 0; i < polygons.length; ++i) {
+			var polygon = polygons[i];
+
+			polygon.createPath(context);
+			if (context.isPointInPath(loc.x, loc.y)) {
+				startDragging(context, loc);
+				draggingOffsetX = loc.x - polygon.centerX;
+				draggingOffsetY = loc.y - polygon.centerY;
+				return polygon;
+			}
+		}
+		return null;
+	};
+
+	const stopRotatingPolygon = (loc: Point) => {
+		if (!polygonRotating) return;
+		let angle =
+			Math.atan(
+				(loc.y - polygonRotating.centerY) / (loc.x - polygonRotating.centerX)
+			) - rotatingLockAngle;
+
+		polygonRotating.startAngle += angle;
+
+		polygonRotating = null;
+		rotatingLockEngaged = false;
+		rotatingLockAngle = 0;
+	};
+
+	const drawRotationAnnotations = (
+		context: CanvasRenderingContext2D,
+		loc: Point
+	) => {
+		if (!context || !polygonRotating) return;
+
+		drawCentroid(context, {
+			x: polygonRotating.centerX,
+			y: polygonRotating.centerY,
+		});
+		drawCentroidGuidewire(context, loc, polygonRotating, rotatingLockAngle);
+
+		drawTrackingDial(context, polygonRotating);
+		drawDegreeOuterDial(context, polygonRotating);
+		context.fillStyle = "rgba(100, 140, 230, 0.1)";
+		context.fill();
+
+		context.beginPath();
+		drawDegreeOuterDial(context, polygonRotating);
+		context.stroke();
+
+		drawDegreeDialTicks(context, polygonRotating);
+		drawDegreeTickDial(context, polygonRotating);
+		drawDegreeAnnotations(context, polygonRotating);
+	};
+
+	const redraw = (context: CanvasRenderingContext2D) => {
+		if (!context) return;
+		const canvas = context.canvas;
+
+		context.clearRect(0, 0, canvas.width, canvas.height);
+		drawGrid(canvas, "lightgray", 10, 10);
+		drawPolygons(context);
 	};
 
 	return (

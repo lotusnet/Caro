@@ -34,7 +34,7 @@ export const drawClock = (canvas: HTMLCanvasElement) => {
 	};
 
 	const drawHands = () => {
-		var date = new Date(),
+		let date = new Date(),
 			hour = date.getHours();
 		hour = hour > 12 ? hour - 12 : hour;
 		drawHand(hour * 5 + (date.getMinutes() / 60) * 5, true);
@@ -57,7 +57,7 @@ export const drawClock = (canvas: HTMLCanvasElement) => {
 	};
 
 	const drawHand = (loc: number, isHour: boolean) => {
-		var angle = Math.PI * 2 * (loc / 60) - Math.PI / 2,
+		let angle = Math.PI * 2 * (loc / 60) - Math.PI / 2,
 			handRadius = isHour
 				? radius - handTrancation - hourHandTrancation
 				: radius - handTrancation;

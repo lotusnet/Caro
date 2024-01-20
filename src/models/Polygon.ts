@@ -41,10 +41,10 @@ export class Polygon {
 	}
 
 	getPoints() {
-		var points: Point[] = [],
+		let points: Point[] = [],
 			angle = this.startAngle || 0;
 
-		for (var i = 0; i < this.sides; ++i) {
+		for (let i = 0; i < this.sides; ++i) {
 			points.push({
 				x: this.centerX + this.radius * Math.sin(angle),
 				y: this.centerY - this.radius * Math.cos(angle),
@@ -55,13 +55,13 @@ export class Polygon {
 	}
 
 	createPath(context: CanvasRenderingContext2D) {
-		var points = this.getPoints();
+		let points = this.getPoints();
 
 		context.beginPath();
 
 		context.moveTo(points[0].x, points[0].y);
 
-		for (var i = 1; i < this.sides; ++i) {
+		for (let i = 1; i < this.sides; ++i) {
 			context.lineTo(points[i].x, points[i].y);
 		}
 

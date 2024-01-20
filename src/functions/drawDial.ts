@@ -1,8 +1,6 @@
-import { Point } from "./drawUtils";
+import { Point } from "models/Polygon";
+import { drawCentroid } from "./drawUtils";
 
-const CENTROID_RADIUS = 10;
-const CENTROID_STROKE_STYLE = "rgba(0,0,0,0.5)";
-const CENTROID_FILL_STYLE = "rgba(80,190,240,0.6)";
 const RING_INNER_RADIUS = 35;
 const RING_OUTER_RADIUS = 55;
 const ANNOTATION_FILL_STYLE = "rgba(0,0,230,0.9)";
@@ -29,18 +27,6 @@ export const drawDial = (canvas: HTMLCanvasElement, radius: number) => {
 	context.shadowBlur = 4;
 	context.textAlign = "center";
 	context.textBaseline = "middle";
-
-	const drawCentroid = () => {
-		if (!context) return;
-		context.beginPath();
-		context.save();
-		context.strokeStyle = CENTROID_STROKE_STYLE;
-		context.fillStyle = CENTROID_FILL_STYLE;
-		context.arc(circle.x, circle.y, CENTROID_RADIUS, 0, Math.PI * 2, false);
-		context.stroke();
-		context.fill();
-		context.restore();
-	};
 
 	const drawRing = () => {
 		if (!context) return;
@@ -118,7 +104,7 @@ export const drawDial = (canvas: HTMLCanvasElement, radius: number) => {
 		const angleMax = 2 * Math.PI;
 		const angleDelta = Math.PI / 64;
 		context.save();
-		for (var angle = 0, cnt = 0; angle < angleMax; angle += angleDelta, cnt++) {
+		for (let angle = 0, cnt = 0; angle < angleMax; angle += angleDelta, cnt++) {
 			drawTick(angle, radius, cnt++);
 		}
 		context.restore();
@@ -130,7 +116,7 @@ export const drawDial = (canvas: HTMLCanvasElement, radius: number) => {
 		context.save();
 		context.fillStyle = ANNOTATION_FILL_STYLE;
 		context.font = ANNOTATION_TEXT_SIZE + "px Helvetica";
-		for (var angle = 0; angle < 2 * Math.PI; angle += Math.PI / 8) {
+		for (let angle = 0; angle < 2 * Math.PI; angle += Math.PI / 8) {
 			context.beginPath();
 			context.fillText(
 				((angle * 180) / Math.PI).toFixed(0),
@@ -167,7 +153,7 @@ export const drawDial = (canvas: HTMLCanvasElement, radius: number) => {
 		return endpt;
 	};
 
-	drawCentroid();
+	drawCentroid(context, { x: circle.x, y: circle.y });
 	//drawCentroidGuidwire(context, getEndPoint());
 	drawRing();
 	drawTickInnerCircle();
